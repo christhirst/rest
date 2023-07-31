@@ -1,0 +1,27 @@
+{
+  "url": "https://example.com",
+  "url_out": "https://example.com",
+  "Username": "usr",
+  "Password": "pw",
+  "headers": {
+    "Content-Type": "application/json",
+    "PRIVATE-TOKEN": "token"
+  },
+  "Partners": {
+    "partnerbw": {
+      "PartnerNameOut": "aIDP_OUT_o",
+      "PartnerNameIN": "aIDP_IN_i",
+      "Description": "aIDP_OUTd"
+    },
+    "partnerhe": {
+      "PartnerNameOut": "bIDP_OUT_o",
+      "PartnerNameIN": "bIDP_IN_i",
+      "Description": "bIDP_OUTd"
+    },
+    "partnerhz": {
+      "PartnerNameOut": "bIDP_OUT_o",
+      "PartnerNameIN": "bIDP_IN_i",
+      "Description": "bIDP_OUTd"
+    }
+  }
+}
