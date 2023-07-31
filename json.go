@@ -115,35 +115,34 @@ func getDataFromURL(url, username, password string) io.ReadCloser {
 	return resp.Body
 }
 
-func getData() {
+func getData(username, password string) {
 	filename := os.Args[1]
-	//username := os.Args[2]
-	//password := os.Args[3]
 
 	w, err := regexp.MatchString(`.data`, filename)
 	if !w && err == nil {
 		filename = "test.csv"
 	}
-	datas := readJsonFromFile("text.json")
+	data := new(Data)
+
+	err = readJsonFromFile("text.json", data)
 	//data := readFromFile(filename)
 	//url := datas.URL
-	for i, v := range datas.Partners {
+	for i, v := range data.Partners {
 		fmt.Println(i, v)
 
-		IDPPartner := new(IDPPartner)
-		reader := getDataFromURL(datas.URL+"/"+v.PartnerNameOut, datas.Username, datas.Password)
+		reader := getDataFromURL(data.URL+"/"+v.PartnerNameOut, data.Username, data.Password)
 		defer reader.Close()
 		var dataParsed Idp
 		if err := json.NewDecoder(reader).Decode(&dataParsed); err != nil {
 			panic(err)
 		}
-
+		IDPPartner := new(IDPPartner)
 		IDPPartner.MetadataB64 = cleanMetadata(dataParsed.MetadataB64)
 		IDPPartner.PartnerName = v.PartnerNameIN
 		IDPPartner.Description = fmt.Sprintf("Participent: %s", v.Description)
 		saveToFile(v.PartnerNameIN, IDPPartner)
 
-		postToEndpoint(datas.Username, datas.Password, datas.URL_out, IDPPartner)
+		//postToEndpoint(data.Username, data.Password, data.URL_out, IDPPartner)
 	}
 
 }
@@ -170,7 +169,7 @@ func saveToFile(filename string, data interface{}) {
 	}
 }
 
-func readJsonFromFile(filename string) Data {
+func readJsonFromFile(filename string, obj interface{}) error {
 	// Open the file
 	file, err := os.Open(filename)
 	if err != nil {
@@ -185,8 +184,7 @@ func readJsonFromFile(filename string) Data {
 	}
 
 	// Unmarshal the JSON data
-	var d Data
-	err = json.Unmarshal(data, &d)
+	err = json.Unmarshal(data, obj)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -194,7 +192,7 @@ func readJsonFromFile(filename string) Data {
 	// Print the data
 	//fmt.Printf("%+v\n", d)
 
-	return d
+	return err
 
 }
 
@@ -204,8 +202,8 @@ func postToEndpoint(username, password, url string, obj interface{}) (*http.Resp
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	// Create a new HTTP request
+
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		log.Fatal(err)
@@ -222,4 +220,43 @@ func postToEndpoint(username, password, url string, obj interface{}) (*http.Resp
 		log.Fatal(err)
 	}
 	return resp, err
+}
+
+func postMultiple(username, password string, data Data) {
+	for _, v := range data.Partners {
+		fmt.Println(v.PartnerNameOut)
+
+		IDPPartner := new(IDPPartner)
+		err := readJsonFromFile("PartnerName.json", IDPPartner)
+		fmt.Println(IDPPartner)
+		if err != nil {
+			log.Fatal(err)
+		}
+		postToEndpoint(username, password, data.URL_out, IDPPartner)
+	}
+}
+
+func MethodSwitch() {
+	method := os.Args[1]
+	filename := os.Args[2]
+	username := os.Args[3]
+	password := os.Args[4]
+
+	w, err := regexp.MatchString(`.json`, filename)
+	if !w && err == nil {
+		filename = "text.json"
+	}
+	data := new(Data)
+
+	err = readJsonFromFile("text.json", data)
+
+	switch method {
+	case "POST":
+		postMultiple(username, password, *data)
+	case "GET":
+		getData(username, password)
+	default:
+		fmt.Println("Method is neither POST nor GET")
+	}
+
 }
