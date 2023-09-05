@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -223,17 +224,46 @@ func postToEndpoint(username, password, url string, obj interface{}) (*http.Resp
 }
 
 func postMultiple(username, password string, data Data) {
-	for _, v := range data.Partners {
-		fmt.Println(v.PartnerNameOut)
-
-		IDPPartner := new(IDPPartner)
-		err := readJsonFromFile("PartnerName.json", IDPPartner)
-		fmt.Println(IDPPartner)
+	partners, err := parseJSONFilesInFolder("./")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, IDPPartner := range partners {
 		if err != nil {
 			log.Fatal(err)
 		}
 		postToEndpoint(username, password, data.URL_out, IDPPartner)
 	}
+}
+
+func parseJSONFilesInFolder(folderPath string) ([]IDPPartner, error) {
+	var data []IDPPartner
+
+	err := filepath.Walk(folderPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil // Skip directories
+		}
+		if filepath.Ext(path) == ".json" {
+			// Read and parse the JSON file
+			fileContent, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			var item IDPPartner
+			if err := json.Unmarshal(fileContent, &item); err != nil {
+				return err
+			}
+
+			data = append(data, item)
+		}
+		return nil
+	})
+
+	return data, err
 }
 
 func MethodSwitch() {

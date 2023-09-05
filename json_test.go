@@ -40,3 +40,13 @@ func TestPostMultiple(t *testing.T) {
 	postMultiple(username, password, *data)
 	t.Error()
 }
+
+func TestParseJSONFilesInFolder(t *testing.T) {
+	path := "./"
+	w, err := parseJSONFilesInFolder(path)
+	if err != nil {
+		t.Error(err)
+	}
+	//getData()
+	t.Error(w)
+}
