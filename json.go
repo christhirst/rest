@@ -197,7 +197,7 @@ func readJsonFromFile(filename string, obj interface{}) error {
 
 }
 
-func postToEndpoint(username, password, url string, obj interface{}) (*http.Response, error) {
+func postToEndpoint(username, password, method, url string, obj IDPPartner) (*http.Response, error) {
 	// Marshal the object to JSON
 	data, err := json.Marshal(obj)
 	if err != nil {
@@ -205,7 +205,7 @@ func postToEndpoint(username, password, url string, obj interface{}) (*http.Resp
 	}
 	// Create a new HTTP request
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	req, err := http.NewRequest(method, url+"/"+obj.PartnerName, bytes.NewBuffer(data))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -223,7 +223,7 @@ func postToEndpoint(username, password, url string, obj interface{}) (*http.Resp
 	return resp, err
 }
 
-func postMultiple(username, password string, data Data) {
+func postMultiple(username, password, method string, data Data) {
 	partners, err := parseJSONFilesInFolder("./")
 	if err != nil {
 		log.Fatal(err)
@@ -232,7 +232,7 @@ func postMultiple(username, password string, data Data) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		postToEndpoint(username, password, data.URL_out, IDPPartner)
+		postToEndpoint(username, password, method, data.URL_out, IDPPartner)
 	}
 }
 
@@ -248,7 +248,7 @@ func parseJSONFilesInFolder(folderPath string) ([]IDPPartner, error) {
 		}
 		if filepath.Ext(path) == ".json" {
 			// Read and parse the JSON file
-			fileContent, err := os.ReadFile(path)
+			fileContent, err := ioutil.ReadFile(path)
 			if err != nil {
 				return err
 			}
@@ -282,7 +282,9 @@ func MethodSwitch() {
 
 	switch method {
 	case "POST":
-		postMultiple(username, password, *data)
+		postMultiple(username, password, method, *data)
+	case "PUT":
+		postMultiple(username, password, method, *data)
 	case "GET":
 		getData(username, password)
 	default:

@@ -16,7 +16,7 @@ func TestPostToEndpoint(t *testing.T) {
 	url := "https://localhost:8000"
 	obj := IDPPartner{MetadataB64: "ww", PartnerName: "qq", Description: "rrr"}
 
-	_, err := postToEndpoint(username, password, url, obj)
+	_, err := postToEndpoint(username, password, "", url, obj)
 
 	t.Error(err)
 }
@@ -38,7 +38,7 @@ func TestPostMultiple(t *testing.T) {
 	password := "testpw"
 	data := new(Data)
 	readJsonFromFile("text.json", data)
-	postMultiple(username, password, *data)
+	postMultiple(username, password, "", *data)
 	t.Error()
 }
 
