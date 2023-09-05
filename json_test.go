@@ -13,11 +13,12 @@ func TestReadFromFile(t *testing.T) {
 func TestPostToEndpoint(t *testing.T) {
 	username := "testuser"
 	password := "testpw"
-	url := "localhost:8000"
+	url := "https://localhost:8000"
 	obj := IDPPartner{MetadataB64: "ww", PartnerName: "qq", Description: "rrr"}
 
-	postToEndpoint(username, password, url, obj)
-	t.Error()
+	_, err := postToEndpoint(username, password, url, obj)
+
+	t.Error(err)
 }
 
 func TestReadJsonFromFile(t *testing.T) {
