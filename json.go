@@ -46,10 +46,11 @@ const (
 type IDPPartner struct {
 	MetadataB64     string       `json:"metadataB64,omitempty"`
 	MetadataURL     string       `json:"metadataURL,omitempty"`
+	PartnerName     string       `json:"partnerName,omitempty"`
+	Description     string       `json:"description,omitempty"`
 	PartnerType     string       `json:"partnerType,omitempty"`
 	TenantName      string       `json:"tenantName,omitempty"`
 	TenantURL       string       `json:"tenantURL,omitempty"`
-	PartnerName     string       `json:"partnerName,omitempty"`
 	NameIDFormat    NameIDFormat `json:"nameIDFormat,omitempty"`
 	SsoProfile      string       `json:"ssoProfile,omitempty"`
 	AttributeLDAP   string       `json:"attributeLDAP,omitempty"`
@@ -60,7 +61,6 @@ type IDPPartner struct {
 	Preverify       bool         `json:"preverify,omitempty"`
 	ProviderID      string       `json:"providerID,omitempty"`
 	SsoURL          string       `json:"ssoURL,omitempty"`
-	Description     string       `json:"description,omitempty"`
 }
 
 type Partner struct {
@@ -94,19 +94,26 @@ func getDataFromURL(url, username, password string) io.ReadCloser {
 	if err != nil {
 		panic(err)
 	}
-
+	fmt.Println(url)
 	// Set the request headers
-	req.Header.Set("Content-Type", "json/xml")
+	req.Header.Set("Content-Type", "application/json")
 
 	// Set the basic authentication credentials
 	req.SetBasicAuth(username, password)
-
+	fmt.Println(username, password)
 	// Send the HTTP request
-	client := &http.Client{Timeout: time.Millisecond * 50}
+	client := &http.Client{Timeout: time.Second * 2}
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	fmt.Println(resp)
+	fmt.Println("++++")
+	fmt.Println(resp.Body)
+	if err != nil {
 		// Define a JSON string
-		jsonString := `{"MetadataB64": "value", "PartnerName": "IDP"}`
+		jsonString := `{"MetadataB64": "error", "PartnerName": "IDP"}`
 
 		// Create an io.ReadCloser that reads from the JSON string
 		reader := ioutil.NopCloser(strings.NewReader(jsonString))
@@ -116,27 +123,18 @@ func getDataFromURL(url, username, password string) io.ReadCloser {
 	return resp.Body
 }
 
-func getData(username, password string) {
-	filename := os.Args[1]
-
-	w, err := regexp.MatchString(`.data`, filename)
-	if !w && err == nil {
-		filename = "test.csv"
-	}
-	data := new(Data)
-
-	err = readJsonFromFile("text.json", data)
-	//data := readFromFile(filename)
-	//url := datas.URL
+func getData(username, password string, data Data) {
 	for i, v := range data.Partners {
 		fmt.Println(i, v)
-
-		reader := getDataFromURL(data.URL+"/"+v.PartnerNameOut, data.Username, data.Password)
+		fmt.Println("#####")
+		reader := getDataFromURL(data.URL+"/"+v.PartnerNameOut, username, password)
 		defer reader.Close()
-		var dataParsed Idp
-		if err := json.NewDecoder(reader).Decode(&dataParsed); err != nil {
+		dataParsed := new(Idp)
+
+		if err := json.NewDecoder(reader).Decode(dataParsed); err != nil {
 			panic(err)
 		}
+		fmt.Println(dataParsed)
 		IDPPartner := new(IDPPartner)
 		IDPPartner.MetadataB64 = cleanMetadata(dataParsed.MetadataB64)
 		IDPPartner.PartnerName = v.PartnerNameIN
@@ -279,14 +277,17 @@ func MethodSwitch() {
 	data := new(Data)
 
 	err = readJsonFromFile("text.json", data)
-
+	if err == nil {
+		log.Println(err)
+	}
+	fmt.Println(data)
 	switch method {
 	case "POST":
 		postMultiple(username, password, method, *data)
 	case "PUT":
 		postMultiple(username, password, method, *data)
 	case "GET":
-		getData(username, password)
+		getData(username, password, *data)
 	default:
 		fmt.Println("Method is neither POST nor GET")
 	}

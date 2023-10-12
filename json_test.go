@@ -23,8 +23,10 @@ func TestPostToEndpoint(t *testing.T) {
 
 func TestReadJsonFromFile(t *testing.T) {
 	data := new(Data)
-	readJsonFromFile("text.json", data)
-	t.Error()
+	err := readJsonFromFile("text.json", data)
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestGetData(t *testing.T) {
